@@ -1,0 +1,221 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8" />
+  <title>Word Embedding Programming GUI</title>
+  <link rel="stylesheet" href="styles.css" />
+</head>
+
+<body>
+  <div class="app">
+    <h1>Word-Embedding Programming Workbench</h1>
+    <div class="subtitle">
+      1) Define words + similarity values. 2) Map words to JavaScript tokens. 3) Write programs with words and create
+      new
+      macro-words.
+    </div>
+
+    <div class="panel-grid">
+
+      <!-- LEFT: vocabulary + tokens -->
+      <div class="panel">
+        <div class="panel-header">
+          <h2>1. Vocabulary & Similarity</h2>
+          <span class="badge">
+            <span class="badge-dot"></span> editable similarity matrix
+          </span>
+        </div>
+
+        <div class="row">
+          <div>
+            <label for="word-input">New word</label>
+            <input type="text" id="word-input" placeholder="example: move, tornike, 67" autocomplete="off" />
+          </div>
+          <div>
+            <label for="vector-input">Diagonal similarity (number)</label>
+            <input type="text" id="vector-input" placeholder="example: 1" autocomplete="off" />
+          </div>
+        </div>
+
+        <div class="row">
+          <div>
+            <button id="add-word-btn" class="primary">Add / Update word</button>
+          </div>
+          <div style="display: flex; justify-content: flex-end; gap: 8px">
+            <button id="clear-all-btn" class="danger">Clear all words</button>
+          </div>
+        </div>
+
+        <div class="row">
+          <div>
+            <label for="search-word-input">Search words</label>
+            <input type="text" id="search-word-input" placeholder="type to filter vocabulary..." />
+          </div>
+        </div>
+
+        <div class="word-table" id="word-table-wrapper">
+          <table id="word-table">
+            <thead>
+              <tr>
+                <th style="width: 140px">Word</th>
+                <th>Embedding / note</th>
+                <th style="width: 80px">Actions</th>
+              </tr>
+            </thead>
+            <tbody id="word-table-body"></tbody>
+          </table>
+        </div>
+
+        <div class="spacer-vertical"></div>
+
+        <div class="section-title-row">
+          <label>Similarity matrix</label>
+          <small>click a cell to edit value</small>
+        </div>
+        <div class="matrix-table" id="sim-matrix-wrapper">
+          <table id="sim-matrix-table">
+            <thead id="sim-matrix-head"></thead>
+            <tbody id="sim-matrix-body"></tbody>
+          </table>
+        </div>
+
+        <div class="spacer-vertical"></div>
+        <hr style="border-color: #111827; margin: 6px 0" />
+
+        <div class="section-title-row">
+          <label>Token mapping (word ➜ JavaScript)</label>
+          <small>used when compiling</small>
+        </div>
+        <div class="word-table" id="token-table-wrapper">
+          <table id="token-table">
+            <thead>
+              <tr>
+                <th style="width: 140px">Word</th>
+                <th>JS token / expression</th>
+              </tr>
+            </thead>
+            <tbody id="token-table-body"></tbody>
+          </table>
+        </div>
+
+        <div class="spacer-vertical"></div>
+        <hr style="border-color: #111827; margin: 6px 0" />
+
+        <div class="section-title-row">
+          <label>Persist / restore setup</label>
+          <small>download or load words + similarity + tokens</small>
+        </div>
+
+        <div class="row">
+          <div style="flex: 0.5">
+            <button id="export-state-btn">Export state (JSON)</button>
+          </div>
+          <div style="flex: 0.5; text-align: right">
+            <input type="file" id="import-state-input" accept="application/json" style="display: none" />
+            <button id="import-state-btn">Import state (JSON)</button>
+          </div>
+        </div>
+
+
+      </div>
+
+      <!-- RIGHT: program + macros -->
+      <div class="panel">
+        <div class="panel-header">
+          <h2>2. Program Editor & Macros</h2>
+          <span class="badge">
+            <span class="badge-dot"></span> words ➜ JS code
+          </span>
+        </div>
+
+        <!-- MAIN PROGRAM EDITOR -->
+        <label for="main-program-input">Main program</label>
+        <textarea id="main-program-input" placeholder="Example:
+define tornike
+set tornike to 67
+print tornike
+"></textarea>
+
+        <div class="row" style="margin-top: 6px">
+          <div style="flex: 0.7">
+            <button id="expand-macros-btn">Expand macros</button>
+            <button id="compile-btn" class="primary">Compile to JavaScript</button>
+          </div>
+          <div style="flex: 0.3; text-align: right">
+            <span class="tiny-label">Tokens: <span id="token-count">0</span></span>
+          </div>
+        </div>
+
+        <div class="spacer-vertical"></div>
+
+        <div class="section-title-row">
+          <label>Expanded program (macros replaced)</label>
+          <small>read-only</small>
+        </div>
+        <div class="output-box" id="expanded-output">(nothing yet)</div>
+
+        <div class="spacer-vertical"></div>
+
+        <div class="section-title-row">
+          <label>Compiled JavaScript</label>
+          <small>each word ➜ mapped JS token or identifier/number</small>
+        </div>
+        <div class="output-box" id="compiled-output">// compiled JS will appear here</div>
+
+        <div class="spacer-vertical"></div>
+        <hr style="border-color: #111827; margin: 6px 0" />
+
+        <!-- MACRO EDITOR -->
+        <div class="section-title-row">
+          <label>3. Macro editor</label>
+          <small>macro word is replaced with its program</small>
+        </div>
+
+        <div class="row">
+          <div>
+            <label for="macro-name-input">Macro name</label>
+            <input type="text" id="macro-name-input" placeholder="example: greet, patrol, square" />
+          </div>
+        </div>
+
+        <label for="macro-editor-input">Macro program</label>
+        <textarea id="macro-editor-input" placeholder="Write the macro body here, then click “Save macro”"></textarea>
+
+        <div class="row" style="margin-top: 6px">
+          <div style="flex: 0.6">
+            <button id="save-macro-btn">Save / update macro</button>
+          </div>
+          <div style="flex: 0.4; text-align: right">
+            <button id="clear-macros-btn" class="danger">Clear all macros</button>
+          </div>
+        </div>
+
+        <div class="spacer-vertical"></div>
+
+        <div class="section-title-row">
+          <label>Defined macros</label>
+          <small>Insert name into program / edit / delete</small>
+        </div>
+
+        <div id="macro-list" class="macro-list"></div>
+
+        <div id="no-macros-hint" class="muted">
+          No macros yet. Write a macro in the macro editor, give it a name, and click “Save / update macro”.
+        </div>
+
+        <!-- we keep this, but we don’t show it directly; renderMacros uses it for chips -->
+        <div id="macro-details" style="display:none;"></div>
+      </div>
+
+
+    </div>
+  </div>
+
+  <script src="app-core.js"></script>
+  <script src="app-dom-ui.js"></script>
+  <script src="app-program.js"></script>
+
+</body>
+
+</html>
