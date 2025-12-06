@@ -77,6 +77,5 @@ Right panel:
 ├── app-core.js       # Core language state & helpers (words, similarity, tokens)
 ├── app-dom-ui.js     # DOM bindings, rendering of tables, macro list, export/import
 ├── app-program.js    # Macro expansion + similarity-aware compiler
-├── app.js            # (Monolithic variant / older combined version)
 ├── package.json      # NPM metadata (currently only peggy dependency)
 └── package-lock.json
