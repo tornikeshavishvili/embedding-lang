@@ -390,3 +390,64 @@ button.small {
   font-size: 10px;
   padding: 2px 6px;
 }
+
+
+.inline-toggle {
+  font-size: 12px;
+  color: #e5e7eb;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.inline-toggle input[type="checkbox"] {
+  accent-color: #22c55e;
+}
+
+.hint-text {
+  font-size: 11px;
+  color: #9ca3af;
+  margin-top: 2px;
+}
+
+.tiny-label {
+  font-size: 11px;
+  color: #9ca3af;
+}
+
+
+
+/* Compact layout for main-program action buttons */
+.program-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  align-items: center;
+  margin-top: 4px;
+}
+
+.program-actions button {
+  padding: 4px 10px;
+  font-size: 11px;
+  border-radius: 6px;
+}
+
+
+/* Row with the main buttons + token info */
+.program-toolbar-row {
+  margin-top: 6px;
+}
+
+/* Row with the similarity toggle + hint text */
+.program-toggle-row {
+  margin-top: 4px;
+}
+
+/* Narrow, unobtrusive help text so it doesn't visually dominate */
+.token-hint {
+  font-size: 11px;
+  margin-top: 2px;
+  color: #9ca3af;
+  max-width: 360px;   /* <-- keeps it narrow, so it won’t “squish” anything */
+  line-height: 1.4;
+}

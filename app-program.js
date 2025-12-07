@@ -61,8 +61,12 @@ function expandProgram(text, visited) {
   return result.join("");
 }
 
-// Compile: similarity-first, then direct mapping, then identifier/number/as-is,
-// preserving all whitespace
+// --- Compilers ---
+
+// Similarity-first compiler
+// 1) similarity-based mapping via findNearestMappedToken
+// 2) fallback to direct mapping
+// 3) identifiers / numbers pass through
 function compileProgram(text) {
   const parts = splitWithWhitespaceAndPunct(text);
   const compiledParts = [];
@@ -108,11 +112,52 @@ function compileProgram(text) {
   return compiledParts.join("");
 }
 
+// Direct-mapping-only compiler (ignores similarity matrix)
+// This is what runs when the "Use similarity matrix" toggle is OFF.
+function compileProgramDirect(text) {
+  const parts = splitWithWhitespaceAndPunct(text);
+  const compiledParts = [];
 
+  for (const part of parts) {
+    if (part === "") continue;
+
+    // Preserve whitespace exactly
+    if (/^\s+$/.test(part)) {
+      compiledParts.push(part);
+      continue;
+    }
+
+    // Preserve punctuation as is
+    if (/^[(){}\[\];,.:+\-*\/%!<>=&|]$/.test(part)) {
+      compiledParts.push(part);
+      continue;
+    }
+
+    const token = part;
+
+    // Direct mapping only: ignore similarity matrix completely
+    let mapped = state.tokens[token] ?? null;
+
+    if (mapped && mapped.trim().length > 0) {
+      compiledParts.push(mapped);
+    } else if (isIdentifier(token) || isNumberLiteral(token)) {
+      compiledParts.push(token);
+    } else {
+      compiledParts.push(token);
+    }
+  }
+
+  return compiledParts.join("");
+}
+
+// --- Program editor wiring ---
 
 function updateTokenCount() {
   const tokens = tokenizeProgram(mainProgramInput.value);
   tokenCountLabel.textContent = String(tokens.length);
+  if (typeof compiledTokenCountLabel !== "undefined" && compiledTokenCountLabel) {
+    compiledTokenCountLabel.textContent = "0";
+  }
 }
 
 exportStateBtn.addEventListener("click", () => {
@@ -139,8 +184,25 @@ expandMacrosBtn.addEventListener("click", () => {
 compileBtn.addEventListener("click", () => {
   const expanded = expandProgram(mainProgramInput.value);
   expandedOutput.textContent = expanded || "(empty)";
-  const jsCode = compileProgram(expanded);
+
+  // If the toggle exists, obey it; otherwise default to "use similarity".
+  const useSim =
+    typeof useSimilarityCheckbox !== "undefined" &&
+    useSimilarityCheckbox &&
+    typeof useSimilarityCheckbox.checked === "boolean"
+      ? useSimilarityCheckbox.checked
+      : true;
+
+  const jsCode = useSim
+    ? compileProgram(expanded)
+    : compileProgramDirect(expanded);
+
   compiledOutput.textContent = jsCode || "// nothing compiled";
+
+  if (typeof compiledTokenCountLabel !== "undefined" && compiledTokenCountLabel) {
+    const compiledTokens = tokenizeProgram(jsCode);
+    compiledTokenCountLabel.textContent = String(compiledTokens.length);
+  }
 });
 
 // --- Macro handlers ---

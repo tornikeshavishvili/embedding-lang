@@ -20,6 +20,8 @@ const compileBtn = document.getElementById("compile-btn");
 const expandedOutput = document.getElementById("expanded-output");
 const compiledOutput = document.getElementById("compiled-output");
 const tokenCountLabel = document.getElementById("token-count");
+const useSimilarityCheckbox = document.getElementById("use-similarity-checkbox");
+const compiledTokenCountLabel = document.getElementById("compiled-token-count");
 
 // right side – macro editor
 const macroNameInput = document.getElementById("macro-name-input");
@@ -535,5 +537,4 @@ clearAllBtn.addEventListener("click", () => {
 searchWordInput.addEventListener("input", () => {
   renderAll();
 });
-
 

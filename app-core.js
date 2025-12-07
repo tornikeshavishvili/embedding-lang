@@ -9,9 +9,9 @@ function isNumberLiteral(token) {
 
 // --- State ---
 // words: { id, name, vector }
-// tokens: mapping word -> JS token
+// tokens: mapping wordName -> JS token
 // macros: macroName -> programText
-// similarity: id -> { otherId: number }
+// similarity: wordId -> { otherWordId: number }
 const state = {
   words: [],
   tokens: {},
@@ -30,6 +30,11 @@ const baseWords = [
   { id: "w_else",     name: "else",     vector: [] },
   { id: "w_repeat",   name: "repeat",   vector: [] },
   { id: "w_times",    name: "times",    vector: [] },
+
+  // extra words for the loop example
+  { id: "w_end",        name: "end",        vector: [] },
+  { id: "w_forLoop",    name: "forLoop",    vector: [] },
+  { id: "w_blockClose", name: "blockClose", vector: [] },
 
   { id: "w_function", name: "function", vector: [] },
   { id: "w_call",     name: "call",     vector: [] },
@@ -101,54 +106,53 @@ const jsTokenWords = [
   { id: "w_arrow",   name: "=>",  vector: [] }
 ];
 
-
-// Predefined mapping: word -> JS token/expression
+// Predefined mapping: wordName -> JS token/expression
 const predefinedTokens = {
   // high-level pseudo-words
-  "define":   "const",
-  "number":   "",
-  "text":     "",
-  "list":     "[]",
+  define:   "const",
+  number:   "",
+  text:     "",
+  list:     "[]",
 
-  "if":       "if",
-  "else":     "else",
-  "repeat":   "// repeat",
-  "times":    "// times",
+  if:       "if",
+  else:     "else",
+  repeat:   "// repeat",
+  times:    "// times",
 
-  "function": "function",
-  "call":     "",
-  "return":   "return",
+  function: "function",
+  call:     "",
+  return:   "return",
 
-  "set":      "=",
-  "to":       "",
+  set:      "=",
+  to:       "",
 
-  "add":      "+",
-  "subtract": "-",
+  add:      "+",
+  subtract: "-",
 
-  "print":    "console.log",
-  "log":      "console.log",
+  print:    "console.log",
+  log:      "console.log",
 
-  "const":    "const",
-  "let":      "let",
-  "var":      "var",
+  const:    "const",
+  let:      "let",
+  var:      "var",
 
-  "for":      "for",
-  "while":    "while",
-  "do":       "do",
-  "switch":   "switch",
-  "case":     "case",
-  "break":    "break",
-  "continue": "continue",
-  "try":      "try",
-  "catch":    "catch",
-  "finally":  "finally",
-  "throw":    "throw",
+  for:      "for",
+  while:    "while",
+  do:       "do",
+  switch:   "switch",
+  case:     "case",
+  break:    "break",
+  continue: "continue",
+  try:      "try",
+  catch:    "catch",
+  finally:  "finally",
+  throw:    "throw",
 
-  "class":    "class",
-  "new":      "new",
-  "this":     "this",
-  "async":    "async",
-  "await":    "await",
+  class:    "class",
+  new:      "new",
+  this:     "this",
+  async:    "async",
+  await:    "await",
 
   // punctuation + operators: mapped to themselves
   "(":   "(",
@@ -183,13 +187,13 @@ const predefinedTokens = {
   "=>":  "=>"
 };
 
-// Initialize state with base words + JS token words
+// --- Initialize state with base words + JS token words ---
 state.words = [...baseWords, ...jsTokenWords];
 state.tokens = { ...predefinedTokens };
 state.macros = {};
 state.similarity = {};
 
-// Initialize similarity matrix: diagonal = 1, off-diagonal = 0
+// --- Similarity matrix initialization ---
 function initSimilarityMatrix() {
   const words = state.words;
   for (let i = 0; i < words.length; i++) {
@@ -204,3 +208,81 @@ function initSimilarityMatrix() {
 }
 initSimilarityMatrix();
 
+// --- Helpers to look up words and ids ---
+function findWordByName(name) {
+  return state.words.find((w) => w.name === name) || null;
+}
+
+function getWordIdByName(name) {
+  const w = findWordByName(name);
+  return w ? w.id : null;
+}
+
+// --- Similarity-aware token lookup ---
+function findNearestMappedToken(wordName) {
+  const sourceId = getWordIdByName(wordName);
+  if (!sourceId) return null;
+
+  const simRow = state.similarity[sourceId];
+  if (!simRow) return null;
+
+  let bestName = null;
+  let bestScore = -Infinity;
+
+  for (const other of state.words) {
+    const otherId = other.id;
+    const otherName = other.name;
+
+    if (!Object.prototype.hasOwnProperty.call(state.tokens, otherName)) continue;
+
+    const score = simRow[otherId];
+    if (typeof score !== "number") continue;
+
+    if (score > bestScore) {
+      bestScore = score;
+      bestName = otherName;
+    }
+  }
+
+  if (!bestName) return null;
+  return state.tokens[bestName] || "";
+}
+
+// --- Custom token mappings for the repeat / end loop example ---
+
+// basic variable / assignment / output
+state.tokens["define"] = "let ";          // "define counter number" -> "let counter "
+state.tokens["number"] = "";              // ignore "number"
+state.tokens["set"]    = "";              // "set counter to 0" -> "counter = 0"
+state.tokens["to"]     = "=";
+state.tokens["print"]  = "console.log";
+
+// loop helpers: we split header across repeat + number + times
+state.tokens["forLoop"]    = "for (let i = 0; i < ";
+state.tokens["blockClose"] = "}";
+
+// IMPORTANT: "repeat", "times", "end"
+// - "repeat" is resolved via similarity to "forLoop" (prefix)
+// - "times" closes header and opens block: ") {"
+// - "end" is resolved via similarity to "blockClose"
+state.tokens["repeat"] = "";       // resolved via similarity to "forLoop"
+state.tokens["times"]  = ") {";    // closes `for (let i = 0; i < 5` → `for (let i = 0; i < 5) {`
+state.tokens["end"]    = "";       // resolved via similarity to "blockClose"
+
+// --- Custom similarity for the example ---
+
+const sim = state.similarity;
+
+function setSim(idA, idB, value) {
+  sim[idA][idB] = value;
+  sim[idB][idA] = value;
+}
+
+const ID_REPEAT     = "w_repeat";
+const ID_FORLOOP    = "w_forLoop";
+const ID_END        = "w_end";
+const ID_BLOCKCLOSE = "w_blockClose";
+
+setSim(ID_REPEAT, ID_FORLOOP, 0.95);   // repeat ~ forLoop
+setSim(ID_END,    ID_BLOCKCLOSE, 0.96); // end ~ blockClose
+setSim(ID_REPEAT, ID_END, 0.1);        // weak relation (optional)

@@ -137,15 +137,34 @@ set tornike to 67
 print tornike
 "></textarea>
 
-        <div class="row" style="margin-top: 6px">
-          <div style="flex: 0.7">
-            <button id="expand-macros-btn">Expand macros</button>
-            <button id="compile-btn" class="primary">Compile to JavaScript</button>
-          </div>
-          <div style="flex: 0.3; text-align: right">
-            <span class="tiny-label">Tokens: <span id="token-count">0</span></span>
-          </div>
-        </div>
+<!-- Buttons + token counters -->
+<div class="row program-toolbar-row">
+  <div class="col col-7">
+    <div class="program-actions">
+      <button id="expand-macros-btn" class="primary">Expand macros</button>
+      <button id="compile-btn" class="success">Compile to JavaScript</button>
+    </div>
+  </div>
+  <div class="col col-5" style="text-align: right; font-size: 12px; color: #9ca3af;">
+    <span id="token-count">0</span> program tokens |
+    <span id="compiled-token-count">0</span> compiled tokens
+  </div>
+</div>
+
+<!-- Similarity toggle + short, narrow hint -->
+<div class="row program-toggle-row">
+  <div class="col col-12">
+    <label class="toggle-row">
+      <input id="use-similarity-toggle" type="checkbox" checked />
+      <span>Use similarity matrix for unknown words</span>
+    </label>
+    <p class="token-hint">
+      When this is off, only exact word → token mappings are used.
+      When it is on, the similarity matrix is used to guess tokens
+      for unknown or fuzzy words.
+    </p>
+  </div>
+</div>
 
         <div class="spacer-vertical"></div>
 
